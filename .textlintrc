@@ -1,0 +1,23 @@
+{
+  "filters": {
+    "comments": true
+  },
+  "rules": {
+    "preset-japanese": true,
+    "spellcheck-tech-word": true,
+    "no-mix-dearu-desumasu":  {
+      "preferInHeader": "ですます",
+      "preferInBody": "ですます",
+      "preferInList": "ですます",
+      "strict": true
+    },
+    "preset-japanese": {
+      "sentence-length": {
+        "max": 200
+      },
+      "no-doubled-joshi": {
+        "separatorChars": ["。","?","!","？","！","・"]
+      },
+    },
+  }
+}

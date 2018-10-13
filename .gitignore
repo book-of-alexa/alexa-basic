@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+.visual-studio-code
+*.code-workspace
+reviews/*.re
+reviews/*.pdf
+.idea/
