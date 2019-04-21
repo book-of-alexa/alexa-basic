@@ -4,8 +4,9 @@ ASK CLIのインストールにはnpmを利用します。試した環境は下�
 
 ```console
 # 検証環境
-macOS High Siera
-npm 5.6.0
+macOS Mojave
+npm 6.9.0
+node 10.15.3
 ```
 
 ASK CLIをインストールするにはターミナルでコマンドを実行します。
@@ -18,7 +19,7 @@ $ npm install -g ask-cli
 
 ```console
 $ ask --version
-1.4.1
+1.7.1
 ```
 
 ASK CLIを利用するにはAWSとAmazon開発者アカウントの認証情報が必要となります。
@@ -33,60 +34,53 @@ AWSの認証情報はLambdaの管理・デプロイに、Amazon開発者アカ�
 
 ```console
 $ ask init
--------------------- Initialize CLI --------------------
-? There is no AWS credentials file found in .aws directory, do you want to set up
-  the credentials right now?(for lambda function deployment) (Use arrow keys)
-> Yes. Set up the AWS credentials.
-  No. Use the AWS environment variables.
-  No. Skip AWS credentials association step.
-  Abort the initialization process.
+This command will initialize the ASK CLI with a profile associated with your Amazon developer credentials.
+------------------------- Step 1 of 2 : ASK CLI Initialization -------------------------
+Switch to "Login with Amazon" page and sign-in with your Amazon developer credentials.
+If your browser did not open the page, run the initialization process again with command "ask init --no-browser".
+ASK Profile "default" was successfully created. The details are recorded in ask-cli config ($HOME/.ask/cli_config).
+Vendor ID set as Mxxx.
 ```
 
-認証情報を作成しようとすると`AWS Access Key ID`と`AWS Secret Access Key`が必要となります。
+ASK CLIとAmazonのアカウントを紐付ける際に次のようなエラーが発生して上手く紐付かない場合があります。
+これはブラウザで事前にAlexa Skill Consoleにログインしておき、`ask init`をすることで解決します。
 
-AWSのIAMで必要なポリシーを設定したユーザーを作成します。最低限必要なポリシーは次の通りです。
-
-```json
+```console
+Call list-vendors error.
+Error code: 401
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "iam:CreateRole",
-        "iam:GetRole",
-        "iam:AttachRolePolicy",
-        "iam:PassRole"
-      ],
-      "Resource": "arn:aws:iam::*:role/ask-*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "lambda:AddPermission",
-        "lambda:CreateFunction",
-        "lambda:GetFunction",
-        "lambda:UpdateFunctionCode",
-        "lambda:ListFunctions"
-      ],
-      "Resource": "arn:aws:lambda:*:*:function:ask-*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "logs:FilterLogEvents",
-        "logs:getLogEvents",
-        "logs:describeLogStreams"
-      ],
-      "Resource": "arn:aws:logs:*:*:log-group:/aws/lambda/ask-*"
-    }
-  ]
+  "message": "You are not authorized to access this operation."
 }
 ```
 
-次にスキルを管理すためのAmazonの認証情報を紐づけます
+Step2でAWSの認証情報を作成します。
+コマンドラインの手順に従って`AWS Access Key ID`と`AWS Secret Access Key`を設定します。
 
-AWSの認証情報の設定が終わるとブラウザが開きます。`Login with Amazon`を使ってAmazonの認証情報と紐づけます。
+IAMで最低限必要なポリシーは次の通りです。
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": {
+        "Effect": "Allow",
+        "Action": [
+            "iam:CreateRole",
+            "iam:GetRole",
+            "iam:AttachRolePolicy",
+            "iam:PassRole",
+            "lambda:AddPermission",
+            "lambda:CreateFunction",
+            "lambda:GetFunction",
+            "lambda:UpdateFunctionCode",
+            "lambda:ListFunctions",
+            "logs:FilterLogEvents",
+            "logs:getLogEvents",
+            "logs:describeLogStreams"
+        ],
+        "Resource": "*"
+    }
+}
+```
 
 これでASK CLIからスキルの管理と、Lambdaの管理を行うことができるようになりました。
 
@@ -95,11 +89,15 @@ AWSの認証情報の設定が終わるとブラウザが開きます。`Login w
 それではASK CLIを使って新しいスキルを作成します。
 
 スキルの作成には、`ask new`というコマンドを利用します。
-
-オプションとして`-n {スキル名}`を追加することで、スキル名・ディレクトリ名を指定することができます。
+実行すると対話形式で、Lambdaの言語の種類やTemplateの種類を聞いてきます。
 
 ```console
-$ ask new -n alexa-book
+$ ask new
+? Please select the runtime Node.js V8
+? List of templates you can choose Feed
+? Please type in your skill name:  alexa-basic-skill
+Skill "alexa-basic-skill" has been created based on the chosen template
+[Warn]: Changed the property name from 'skillManifest' to 'manifest' in skill.json in order to fit the v1 Alexa Skill Management APIs accepted format.
 ```
 
 このコマンドを実行すると、下記のような構成でファイルが出来上がります。
@@ -110,10 +108,11 @@ alexa-book
 │   └── config
 ├── lambda
 │   └── custom
-│       ├── index.js
 │       ├── node_modules
+│       ├── index.js
 │       ├── package-lock.json
-│       └── package.json
+│       ├── package.json
+│       ...
 ├── models
 │   └── en-US.json
 └── skill.json
